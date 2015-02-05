@@ -22,6 +22,7 @@ install: plink vcftools ld_r2
 
 clean:
 	rm $(BINDIR)/plink; \
+	rm $(BINDIR)/prettify; \
 	rm $(BINDIR)/vcftools; \
 	rm $(BINDIR)/ld_r2.py
 
