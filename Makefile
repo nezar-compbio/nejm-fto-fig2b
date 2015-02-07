@@ -21,6 +21,7 @@ export DATADIR = $(THISDIR)data/
 
 .PHONY: all clean html
 
+all: project
 
 # === Required binaries ===
 tabix:
@@ -66,7 +67,7 @@ html:
 
 
 # === Analysis pipeline ===
-all: init convert-to-map-ped bin-variants ld-matrix
+project: init convert-to-map-ped bin-variants ld-matrix
 
 clean:
 	-$(RM) $(DATADIR)02-ld-r2/* $(DATADIR)03-ld-aggregate/*
