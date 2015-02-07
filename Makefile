@@ -29,7 +29,7 @@ tabix:
 	tar -xvf $(BINDIR)htslib.tar.bz2 -C $(BINDIR); \
 	cd $(BINDIR)htslib-1.2.1 && $(MAKE) lib-static lib-shared tabix; \
 	cp $(BINDIR)htslib-1.2.1/tabix $(BINDIR); \
-	cd $(BINDIR) && rm -r $(BINDIR)htslib-1.2.1 && rm $(BINDIR)htslib-1.2.1.tar.bz2
+	cd $(BINDIR) && rm -r $(BINDIR)htslib-1.2.1 && rm $(BINDIR)htslib.tar.bz2
 
 plink-1.07:
 	wget -O $(BINDIR)plink.zip "http://pngu.mgh.harvard.edu/~purcell/plink/dist/plink-1.07-x86_64.zip"; \
