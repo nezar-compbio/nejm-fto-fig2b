@@ -5,6 +5,7 @@ import argparse
 import numpy as np
 import pandas
 
+
 def main(mapfile, out, start, stop, binsize):
     # read in map file of snp locations
     snps = pandas.read_csv(

@@ -7,7 +7,7 @@ Download and build tool binaries.
 $ make install-tools
 ```
 
-Install Python packages.
+Install Python packages (numpy, pandas).
 
 ```bash
 $ pip install -r requirements.txt

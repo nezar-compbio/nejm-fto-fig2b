@@ -1,23 +1,32 @@
-# Params
+# Parameters
+# ==========
+
+# Data source
+# 1KG Phase 1
 URL = "ftp://ftp-trace.ncbi.nih.gov/1000genomes/ftp/release/20110521/ALL.chr16.phase1_release_v3.20101123.snps_indels_svs.genotypes.vcf.gz"
-INPUTNAME = ALL-chr16-section
-#INPUTNAME = 16.52800000-56000000.ALL.chr16.phase1_release_v3.20101123.snps_indels_svs.genotypes
-#INPUTNAME = 16.52800000-56000000.ALL.chr16.phase3_shapeit2_mvncall_integrated_v5.20130502.genotypes
+# 1KG Phase 3
+#URL = "ftp://ftp-trace.ncbi.nih.gov/1000genomes/ftp/release/20130502/ALL.chr16.phase3_shapeit2_mvncall_integrated_v5.20130502.genotypes.vcf.gz"
+
+# Region
 START = 52800000
-STOP = 56000000
+STOP  = 56000000
+INPUTNAME = chr16-$(START)-$(STOP)
+
+# Size of bins to aggregate (bp)
 BINSIZE = 10000
-# floating point format: f4, f8
+
+# Floating point format: f4, f8
 FMT = f4
 ifeq ($(FMT),f4)
   BINPARAM = bin4
 else
   BINPARAM = bin
 endif
+# ==========
 
 THISDIR = $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
 export BINDIR = $(THISDIR)bin/
 export DATADIR = $(THISDIR)data/
-
 
 .PHONY: all clean html
 
@@ -60,47 +69,52 @@ clean-tools:
 	rm $(BINDIR)vcftools
 
 
-# === Publish ===
-html:
-	ipython nbconvert --to html notebooks/*.ipynb; \
-	mv *.html notebooks/html
-
-
 # === Analysis pipeline ===
-project: init convert-to-map-ped bin-variants ld-matrix
-
-clean:
-	-$(RM) $(DATADIR)02-ld-r2/* $(DATADIR)03-ld-aggregate/*
+project: init fetch-variants convert-to-map-ped bin-variants ld-matrix reduce-ld-matrix
 
 init:
 	mkdir -p $(DATADIR)01-variants $(DATADIR)02-ld-r2 $(DATADIR)03-ld-aggregate
+
+clean:
+	-$(RM) $(DATADIR)02-ld-r2/* $(DATADIR)03-ld-aggregate/*
 
 fetch-variants:
 	cd $(DATADIR)01-variants; \
 	$(BINDIR)tabix -h $(URL) 16:$(START)-$(STOP) | gzip -c > $(DATADIR)01-variants/$(INPUTNAME).vcf.gz
 
+# Converting directly with vcftools did not work. Using "tped" as intermediate.
 convert-to-map-ped: $(DATADIR)01-variants/$(INPUTNAME).vcf.gz
 	$(BINDIR)vcftools --gzvcf $(DATADIR)01-variants/$(INPUTNAME).vcf.gz --chr 16 --from-bp $(START) --to-bp $(STOP) --plink-tped --out $(DATADIR)02-ld-r2/$(INPUTNAME); \
 	$(BINDIR)plink --tfile $(DATADIR)02-ld-r2/$(INPUTNAME) --recode --out $(DATADIR)02-ld-r2/$(INPUTNAME)
 
 bin-variants: $(DATADIR)02-ld-r2/$(INPUTNAME).map
-	python varcount.py $(DATADIR)02-ld-r2/$(INPUTNAME).map $(START) $(STOP) $(BINSIZE) --out $(DATADIR)02-ld-r2/$(INPUTNAME).binned.txt
+	python varcount.py $(DATADIR)02-ld-r2/$(INPUTNAME).map $(START) $(STOP) $(BINSIZE) --out $(DATADIR)02-ld-r2/$(INPUTNAME).binned.index
 
+# BUG in plink-1.9!
 ld-matrix: $(DATADIR)02-ld-r2/$(INPUTNAME).tped
 	$(BINDIR)plink2 --file $(DATADIR)02-ld-r2/$(INPUTNAME) --r2 square $(BINPARAM) --out $(DATADIR)02-ld-r2/$(INPUTNAME)
 
-reduce-ld-matrix: $(DATADIR)02-ld-r2/$(INPUTNAME).binned.txt $(DATADIR)02-ld-r2/$(INPUTNAME).binned.txt
-	python reduceld.py $(DATADIR)02-ld-r2/$(INPUTNAME).ld.bin $(DATADIR)02-ld-r2/$(INPUTNAME).binned.txt $(BINSIZE) $(FMT) --out $(DATADIR)03-ld-aggregate/$(INPUTNAME)
+reduce-ld-matrix: $(DATADIR)02-ld-r2/$(INPUTNAME).binned.index $(DATADIR)02-ld-r2/$(INPUTNAME).binned.index
+	python reduceld.py $(DATADIR)02-ld-r2/$(INPUTNAME).ld.bin $(DATADIR)02-ld-r2/$(INPUTNAME).binned.index $(BINSIZE) $(FMT) --out $(DATADIR)03-ld-aggregate/$(INPUTNAME)
 
 
 
-# Other attempts
-# ld-matrix-plink1:
-# 	$(BINDIR)plink --file $(DATADIR)02-ld-r2/$(INPUTNAME) --r2 --matrix --out $(DATADIR)02-ld-r2/$(INPUTNAME)
-# 	#plink --file mydata --r2 --ld-window-kb 500000
 
-# ld-matrix-gz: $(DATADIR)02-ld-r2/$(INPUTNAME).tped
-# 	$(BINDIR)plink2 --tfile $(DATADIR)02-ld-r2/$(INPUTNAME) --r2 square gz --out $(DATADIR)02-ld-r2/$(INPUTNAME)
+# === Other attempts... ===
+# plink-1.09
+ld-matrix-plink1:
+	$(BINDIR)plink --file $(DATADIR)02-ld-r2/$(INPUTNAME) --r2 --matrix --out $(DATADIR)02-ld-r2/$(INPUTNAME)
 
-# reduce-ld-matrix-gz: $(DATADIR)02-ld-r2/$(INPUTNAME).binned.txt $(DATADIR)02-ld-r2/$(INPUTNAME).binned.txt
-# 	python reduceld.py $(DATADIR)02-ld-r2/$(INPUTNAME).ld.gz $(DATADIR)02-ld-r2/$(INPUTNAME).binned.txt $(BINSIZE) --gz --out $(DATADIR)03-ld-aggregate/$(INPUTNAME)
+reduce-ld-matrix-gz: $(DATADIR)02-ld-r2/$(INPUTNAME).binned.index
+	python reduceld.py $(DATADIR)02-ld-r2/$(INPUTNAME).ld.gz $(DATADIR)02-ld-r2/$(INPUTNAME).binned.index $(BINSIZE) $(FMT) --gz --out $(DATADIR)03-ld-aggregate/$(INPUTNAME)
+
+reduce-ld-matrix-txt: $(DATADIR)02-ld-r2/$(INPUTNAME).binned.index
+	python reduceld.py $(DATADIR)02-ld-r2/$(INPUTNAME).ld $(DATADIR)02-ld-r2/$(INPUTNAME).binned.index $(BINSIZE) $(FMT) --txt --out $(DATADIR)03-ld-aggregate/$(INPUTNAME)
+
+
+
+
+# === Publish ===
+html:
+	ipython nbconvert --to html notebooks/*.ipynb; \
+	mv *.html notebooks/html
