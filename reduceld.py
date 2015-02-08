@@ -53,11 +53,11 @@ def main(**kwargs):
     n_bins = len(df)
 
     # create a bin-wise chunk iterator over the LD matrix
-    if kwargs.pop('gz', False):
+    if kwargs.pop('gz', False): #plink2
         reader = pandas.read_csv(kwargs.pop('ldfile'), sep='\t', compression='gzip', header=None, iterator=True)
         iterator = enumerate_bins_gz(reader, zip(starts, stops))
-    elif kwargs.pop('txt', False):
-        reader = pandas.read_csv(kwargs.pop('ldfile'), sep='\t', header=None, iterator=True)
+    elif kwargs.pop('txt', False): #plink1
+        reader = pandas.read_csv(kwargs.pop('ldfile'), sep=' ', header=None, iterator=True)
         iterator = enumerate_bins_gz(reader, zip(starts, stops))
     else:
         total_snps = stops[-1]
