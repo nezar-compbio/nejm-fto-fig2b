@@ -84,7 +84,7 @@ ld-aggregate-gz: $(DATADIR2)$(INPUTNAME).ld.gz $(DATADIR2)$(INPUTNAME).$(BINSIZE
 
 
 # === Stable version (SLOW!) ===
-# plink-1.09
+# plink-1.07
 ld-matrix-plink1: $(DATADIR2)$(INPUTNAME).map $(DATADIR2)$(INPUTNAME).ped
 	$(BINDIR)plink --file $(DATADIR2)$(INPUTNAME) --r2 --matrix --out $(DATADIR2)$(INPUTNAME)
 
