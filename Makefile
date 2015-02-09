@@ -124,12 +124,7 @@ ld-aggregate-plink1: $(DATADIR2)$(INPUTNAME).$(BINSIZE).binned.index
 
 # === Publish ===
 notebook-html:
-	ipython nbconvert --to=html notebook/figure.ipynb; \
-	mv notebook/figure.html publish
-
-notebook-pdf:
-	ipython nbconvert --to=pdf notebook/figure.ipynb; \
-	mv notebook/figure.pdf publish
+	ipython nbconvert --to=html --output publish/figure notebook/figure.ipynb
 
 run-notebook:
 	mkdir -p publish/img; \
