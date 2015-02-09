@@ -15,7 +15,7 @@ STOP  = 56000000
 INPUTNAME = chr16.$(START)-$(STOP)
 
 # Size of bins to aggregate (bp)
-BINSIZE = 10000
+BINSIZE = 5000
 
 # Floating point format or gz: bin, bin4, gz
 FMT = bin4
