@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 from __future__ import division, print_function
 import argparse
 
@@ -7,18 +6,17 @@ import pandas
 
 
 def main(mapfile, out, start, stop, binsize):
-    # read in map file of snp locations
+    # map file contains variants sorted by bp position
     variants = pandas.read_csv(
         mapfile,
         header=None, 
         names=['chrom', 'id', '_', 'POS'],
         delimiter='\t')
 
-    # the rows are variants sorted by bp position
     # group them into genomic bins of equal width
     spans = pandas.cut(
         variants['POS'], 
-        range(start, stop+binsize, binsize)
+        np.arange(start, stop+binsize, binsize)
     )
     gby = variants.groupby(spans)
     counts = gby.size().sort_index().values
@@ -26,7 +24,7 @@ def main(mapfile, out, start, stop, binsize):
     counts = counts.astype(int)
     edges = np.r_[0, np.cumsum(counts)]
 
-    # write out tsv file of bins
+    # write out tsv index file of bin edges and counts
     df = pandas.DataFrame(
         {'start':edges[:-1], 
          'stop':edges[1:], 

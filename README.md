@@ -7,7 +7,7 @@ Download and build tool binaries. Assumes 64-bit linux platform.
 $ make install-tools
 ```
 
-Install Python packages (numpy, pandas).
+Install Python packages (numpy, pandas, matplotlib). One way:
 
 ```bash
 $ pip install -r requirements.txt
@@ -15,6 +15,10 @@ $ pip install -r requirements.txt
 
 Analysis pipeline
 -----------------
+
+```bash
+$ make init fetch-vcf
+```
 
 ```bash
 $ make project
