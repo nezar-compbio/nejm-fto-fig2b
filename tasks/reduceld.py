@@ -29,11 +29,18 @@ def aggregate(n_bins, iterator, counts, binsize, dtype, out, thresh, percentile)
     np.savetxt(outbase+'.perc{:.3g}.txt.gz'.format(percentile), R2perc)    
 
 
+def enumerate_bins_debug(edge_pairs):
+    for i, (i1, i2) in enumerate(edge_pairs):
+        if (i2 - i1) > 0:
+            print(i, i1, i2)
+
 def enumerate_bins_text(reader, edge_pairs):
     for i, (i1, i2) in enumerate(edge_pairs):
-        chunk = reader.read(i2-i1)
-        for j, (j1, j2) in enumerate(edge_pairs):
-            yield (i, j), chunk.iloc[:, j1:j2].values
+        if (i2 - i1) > 0:
+            chunk = reader.read(i2-i1)
+            for j, (j1, j2) in enumerate(edge_pairs):
+                if (j2 - j1) > 0:
+                    yield (i, j), chunk.iloc[:, j1:j2].values
 
 
 def enumerate_bins_mmap(mmap, edge_pairs):
@@ -48,6 +55,7 @@ def main(**kwargs):
     n_bins = len(df)
     n_variants = stops[-1]
 
+    
     format = kwargs.pop('fmt')
     kwargs['dtype'] = np.float64 if format == 'bin' else np.float32
 

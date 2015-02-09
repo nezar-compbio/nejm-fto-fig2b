@@ -3,4 +3,5 @@
 bin/*
 !bin/Makefile
 data/
+publish/
 tmp/

@@ -28,6 +28,7 @@ DATADIR = $(THISDIR)data/
 DATADIR1 = $(THISDIR)data/01-variants/
 DATADIR2 = $(THISDIR)data/02-ld-r2/
 DATADIR3 = $(THISDIR)data/03-ld-aggregate/
+DATADIR4 = $(THISDIR)data/04-hic/
 PUBDIR = $(THISDIR)publish/
 
 
@@ -93,8 +94,11 @@ ld-aggregate-plink1: $(DATADIR2)$(INPUTNAME).ld $(DATADIR2)$(INPUTNAME).$(BINSIZ
 
 
 # === Publish ===
+image: $(DATADIR3)$(INPUTNAME).ld.$(BINSIZE).mean.txt.gz
+	python $(TASKDIR)ld_image.py $(DATADIR3)$(INPUTNAME).ld.$(BINSIZE).mean.txt.gz $(BINSIZE) --fmt $(FMT) --out $(PUBDIR)ldmatrix
+
 figure: $(DATADIR3)$(INPUTNAME).ld.$(BINSIZE).mean.txt.gz
-	python $(TASKDIR)figure.py $(DATADIR3)$(INPUTNAME).ld.$(BINSIZE).mean.txt.gz $(BINSIZE) --fmt $(FMT) --out $(PUBDIR)ldmatrix
+	python $(TASKDIR)figure.py $(DATADIR4)IMR90.MAPQG0.chr16_5kb.ICEobserved.npy $(DATADIR3)$(INPUTNAME).ld.$(BINSIZE).mean.txt.gz $(BINSIZE) --out $(PUBDIR)$(INPUTNAME).ld.$(BINSIZE).mean
 
 notebook-html:
 	ipython nbconvert --to=html --output $(PUBDIR)figure notebook/figure.ipynb
