@@ -126,6 +126,6 @@ ld-aggregate-plink1: $(DATADIR2)$(INPUTNAME).$(BINSIZE).binned.index
 notebook-html:
 	ipython nbconvert --to=html --output publish/figure notebook/figure.ipynb
 
-run-notebook:
-	mkdir -p publish/img; \
-	ipython nbconvert --to=notebook --ExecutePreprocessor.enabled=True notebook/figure.ipynb
+# run-notebook:
+# 	mkdir -p publish/img; \
+# 	ipython nbconvert --to=notebook --ExecutePreprocessor.enabled=True notebook/figure.ipynb
