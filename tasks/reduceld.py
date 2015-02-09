@@ -16,8 +16,9 @@ def aggregate(n_bins, iterator, counts, binsize, out, fmt, thresh=0.1, percentil
     R2freq = np.zeros((n_bins, n_bins), dtype=fmt)
     R2perc = np.zeros((n_bins, n_bins), dtype=fmt)
     for (i, j), x in iterator:
-        print(i,j)
         y = x[np.isfinite(x)]
+        if not y.size: continue
+        print(i,j)
         R2mean[i,j] = np.mean(y)
         R2medi[i,j] = np.median(y)
         R2freq[i,j] = np.sum(y >= thresh)/counts[i]/counts[j]
@@ -53,10 +54,10 @@ def main(**kwargs):
     n_bins = len(df)
 
     # create a bin-wise chunk iterator over the LD matrix
-    if kwargs.pop('gz', False): #plink2
+    if kwargs.pop('gz', False):
         reader = pandas.read_csv(kwargs.pop('ldfile'), sep='\t', compression='gzip', header=None, iterator=True)
         iterator = enumerate_bins_gz(reader, zip(starts, stops))
-    elif kwargs.pop('txt', False): #plink1
+    elif kwargs.pop('plink1', False): #plink1 --> raw text, space-delimited
         reader = pandas.read_csv(kwargs.pop('ldfile'), sep=' ', header=None, iterator=True)
         iterator = enumerate_bins_gz(reader, zip(starts, stops))
     else:
@@ -76,7 +77,7 @@ if __name__ == '__main__':
     parser.add_argument("binsize", type=int)
     parser.add_argument("fmt", type=str)
     parser.add_argument("--out", type=str, required=True)
-    parser.add_argument("--txt", action='store_true')
+    parser.add_argument("--plink1", action='store_true')
     parser.add_argument("--gz", action='store_true')
     parser.add_argument("--thresh", type=int, default=0.1)
     parser.add_argument("--percentile", type=float, default=90)

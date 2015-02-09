@@ -1,7 +1,7 @@
 Setup
 -----
 
-Download and build tool binaries.
+Download and build tool binaries. Assumes 64-bit linux platform.
 
 ```bash
 $ make install-tools

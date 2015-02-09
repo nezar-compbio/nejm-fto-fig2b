@@ -8,25 +8,29 @@ import pandas
 
 def main(mapfile, out, start, stop, binsize):
     # read in map file of snp locations
-    snps = pandas.read_csv(
+    variants = pandas.read_csv(
         mapfile,
         header=None, 
         names=['chrom', 'id', '_', 'POS'],
         delimiter='\t')
 
-    # the rows are snps sorted by bp position
+    # the rows are variants sorted by bp position
     # group them into genomic bins of equal width
-    interval_map = pandas.cut(
-        snps['POS'], 
+    spans = pandas.cut(
+        variants['POS'], 
         range(start, stop+binsize, binsize)
     )
-    gby = snps.groupby(interval_map)
-    snpcounts = [len(gby.get_group(interval)) for interval in sorted(gby.groups.keys())]
-    edges = np.r_[0, np.cumsum(snpcounts)]
+    gby = variants.groupby(spans)
+    counts = gby.size().sort_index().values
+    counts[np.isnan(counts)] = 0
+    counts = counts.astype(int)
+    edges = np.r_[0, np.cumsum(counts)]
 
     # write out tsv file of bins
     df = pandas.DataFrame(
-        {'start':edges[:-1], 'stop':edges[1:], 'count':snpcounts},
+        {'start':edges[:-1], 
+         'stop':edges[1:], 
+         'count':counts},
         columns=['start','stop','count'])
     df.to_csv(out, sep='\t', index=False)
 

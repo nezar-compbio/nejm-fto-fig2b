@@ -1,19 +1,21 @@
-# Parameters
-# ==========
+# === Parameters ===
 
 # Data source
+# -----------
 # 1KG Phase 1
 URL = "ftp://ftp-trace.ncbi.nih.gov/1000genomes/ftp/release/20110521/ALL.chr16.phase1_release_v3.20101123.snps_indels_svs.genotypes.vcf.gz"
+
 # 1KG Phase 3
 #URL = "ftp://ftp-trace.ncbi.nih.gov/1000genomes/ftp/release/20130502/ALL.chr16.phase3_shapeit2_mvncall_integrated_v5.20130502.genotypes.vcf.gz"
+# -----------
 
 # Region
 START = 52800000
 STOP  = 56000000
-INPUTNAME = chr16-$(START)-$(STOP)
+INPUTNAME = chr16.$(START)-$(STOP)
 
 # Size of bins to aggregate (bp)
-BINSIZE = 10000
+BINSIZE = 10000 
 
 # Floating point format: f4, f8
 FMT = f4
@@ -25,12 +27,20 @@ endif
 # ==========
 
 THISDIR = $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
-export BINDIR = $(THISDIR)bin/
-export DATADIR = $(THISDIR)data/
+BINDIR = $(THISDIR)bin/
+TASKDIR = $(THISDIR)tasks/
+DATADIR = $(THISDIR)data/
+DATADIR1 = $(THISDIR)data/01-variants/
+DATADIR2 = $(THISDIR)data/02-ld-r2/
+DATADIR3 = $(THISDIR)data/03-ld-aggregate/
+
+
 
 .PHONY: all clean html
 
 all: project
+
+
 
 # === Required binaries ===
 tabix:
@@ -69,52 +79,58 @@ clean-tools:
 	rm $(BINDIR)vcftools
 
 
+
 # === Analysis pipeline ===
-project: init fetch-variants convert-to-map-ped bin-variants ld-matrix reduce-ld-matrix
-
 init:
-	mkdir -p $(DATADIR)01-variants $(DATADIR)02-ld-r2 $(DATADIR)03-ld-aggregate
+	mkdir -p $(DATADIR1) $(DATADIR2) $(DATADIR3)
 
-clean:
-	-$(RM) $(DATADIR)02-ld-r2/* $(DATADIR)03-ld-aggregate/*
-
-fetch-variants:
-	cd $(DATADIR)01-variants; \
-	$(BINDIR)tabix -h $(URL) 16:$(START)-$(STOP) | gzip -c > $(DATADIR)01-variants/$(INPUTNAME).vcf.gz
+fetch-vcf:
+	cd $(DATADIR1); \
+	$(BINDIR)tabix -h $(URL) 16:$(START)-$(STOP) | gzip -c > $(DATADIR1)$(INPUTNAME).vcf.gz
 
 # Converting directly with vcftools did not work. Using "tped" as intermediate.
-convert-to-map-ped: $(DATADIR)01-variants/$(INPUTNAME).vcf.gz
-	$(BINDIR)vcftools --gzvcf $(DATADIR)01-variants/$(INPUTNAME).vcf.gz --chr 16 --from-bp $(START) --to-bp $(STOP) --plink-tped --out $(DATADIR)02-ld-r2/$(INPUTNAME); \
-	$(BINDIR)plink --tfile $(DATADIR)02-ld-r2/$(INPUTNAME) --recode --out $(DATADIR)02-ld-r2/$(INPUTNAME)
-
-bin-variants: $(DATADIR)02-ld-r2/$(INPUTNAME).map
-	python varcount.py $(DATADIR)02-ld-r2/$(INPUTNAME).map $(START) $(STOP) $(BINSIZE) --out $(DATADIR)02-ld-r2/$(INPUTNAME).binned.index
+convert-to-map-ped: $(DATADIR1)$(INPUTNAME).vcf.gz
+	$(BINDIR)vcftools --gzvcf $(DATADIR1)$(INPUTNAME).vcf.gz --chr 16 --from-bp $(START) --to-bp $(STOP) --plink-tped --out $(DATADIR2)$(INPUTNAME); \
+	$(BINDIR)plink --tfile $(DATADIR2)$(INPUTNAME) --recode --out $(DATADIR2)$(INPUTNAME)
 
 # BUG in plink-1.9!
-ld-matrix: $(DATADIR)02-ld-r2/$(INPUTNAME).tped
-	$(BINDIR)plink2 --file $(DATADIR)02-ld-r2/$(INPUTNAME) --r2 square $(BINPARAM) --out $(DATADIR)02-ld-r2/$(INPUTNAME)
+ld-matrix: $(DATADIR2)$(INPUTNAME).map $(DATADIR2)$(INPUTNAME).ped
+	$(BINDIR)plink2 --file $(DATADIR2)$(INPUTNAME) --r2 square $(BINPARAM) --out $(DATADIR2)$(INPUTNAME)
 
-reduce-ld-matrix: $(DATADIR)02-ld-r2/$(INPUTNAME).binned.index $(DATADIR)02-ld-r2/$(INPUTNAME).binned.index
-	python reduceld.py $(DATADIR)02-ld-r2/$(INPUTNAME).ld.bin $(DATADIR)02-ld-r2/$(INPUTNAME).binned.index $(BINSIZE) $(FMT) --out $(DATADIR)03-ld-aggregate/$(INPUTNAME)
+index: $(DATADIR2)$(INPUTNAME).map
+	python $(TASKDIR)varcount.py $(DATADIR2)$(INPUTNAME).map $(START) $(STOP) $(BINSIZE) --out $(DATADIR2)$(INPUTNAME).$(BINSIZE).binned.index
 
+ld-aggregate-binary: $(DATADIR2)$(INPUTNAME).$(BINSIZE).binned.index
+	python $(TASKDIR)reduceld.py $(DATADIR2)$(INPUTNAME).ld.bin $(DATADIR2)$(INPUTNAME).$(BINSIZE).binned.index $(BINSIZE) $(FMT) --out $(DATADIR3)$(INPUTNAME)
+
+ld-aggregate-gz: $(DATADIR2)$(INPUTNAME).$(BINSIZE).binned.index
+	python $(TASKDIR)reduceld.py $(DATADIR2)$(INPUTNAME).ld.gz $(DATADIR2)$(INPUTNAME).$(BINSIZE).binned.index $(BINSIZE) $(FMT) --gz --out $(DATADIR3)$(INPUTNAME)
+
+clean:
+	-$(RM) $(DATADIR2)* $(DATADIR3)*
+
+project: init fetch-vcf convert-to-map-ped ld-matrix index ld-aggregate-binary
 
 
 
 # === Other attempts... ===
 # plink-1.09
 ld-matrix-plink1:
-	$(BINDIR)plink --file $(DATADIR)02-ld-r2/$(INPUTNAME) --r2 --matrix --out $(DATADIR)02-ld-r2/$(INPUTNAME)
+	$(BINDIR)plink --file $(DATADIR2)$(INPUTNAME) --r2 --matrix --out $(DATADIR2)$(INPUTNAME)
 
-reduce-ld-matrix-gz: $(DATADIR)02-ld-r2/$(INPUTNAME).binned.index
-	python reduceld.py $(DATADIR)02-ld-r2/$(INPUTNAME).ld.gz $(DATADIR)02-ld-r2/$(INPUTNAME).binned.index $(BINSIZE) $(FMT) --gz --out $(DATADIR)03-ld-aggregate/$(INPUTNAME)
-
-reduce-ld-matrix-txt: $(DATADIR)02-ld-r2/$(INPUTNAME).binned.index
-	python reduceld.py $(DATADIR)02-ld-r2/$(INPUTNAME).ld $(DATADIR)02-ld-r2/$(INPUTNAME).binned.index $(BINSIZE) $(FMT) --txt --out $(DATADIR)03-ld-aggregate/$(INPUTNAME)
-
-
+ld-aggregate-plink1: $(DATADIR2)$(INPUTNAME).$(BINSIZE).binned.index
+	python $(TASKDIR)reduceld.py $(DATADIR2)$(INPUTNAME).ld $(DATADIR2)$(INPUTNAME).$(BINSIZE).binned.index $(BINSIZE) $(FMT) --plink1 --out $(DATADIR3)$(INPUTNAME)
 
 
 # === Publish ===
-html:
-	ipython nbconvert --to html notebooks/*.ipynb; \
-	mv *.html notebooks/html
+notebook-html:
+	ipython nbconvert --to=html notebook/figure.ipynb; \
+	mv notebook/figure.html publish
+
+notebook-pdf:
+	ipython nbconvert --to=pdf notebook/figure.ipynb; \
+	mv notebook/figure.pdf publish
+
+run-notebook:
+	mkdir -p publish/img; \
+	ipython nbconvert --to=notebook --ExecutePreprocessor.enabled=True notebook/figure.ipynb
