@@ -2,6 +2,7 @@
 .ipynb_checkpoints/
 bin/*
 !bin/Makefile
-data/
+data/*
+!data/04-hic
 publish/
 tmp/
