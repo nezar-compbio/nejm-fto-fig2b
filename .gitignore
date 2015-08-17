@@ -4,5 +4,4 @@ bin/*
 !bin/Makefile
 data/*
 !data/04-hic
-publish/
 tmp/

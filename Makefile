@@ -33,7 +33,7 @@ DATADIR1 = $(THISDIR)data/01-variants/
 DATADIR2 = $(THISDIR)data/02-ld-r2/
 DATADIR3 = $(THISDIR)data/03-ld-aggregate/
 DATADIR4 = $(THISDIR)data/04-hic/
-PUBDIR = $(THISDIR)publish/
+PUBDIR = $(THISDIR)output/
 
 
 all: install-tools init fetch-vcf project
