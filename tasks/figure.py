@@ -44,6 +44,7 @@ locations = [ #bp coordinate
 ]
 
 
+
 # some utils...
 
 blues = sns.cubehelix_palette(0.4, gamma=0.5, rot=-0.3, dark=0.1, light=0.9, as_cmap=True)
@@ -78,16 +79,6 @@ class Binner(object):
         return max(0, min(i, self.n_bins-1))
 
 
-# Dumb workaround until I figure out why reduceld.py chokes on empty bins. (5kb)
-# Need to manually remove the following bins from the index file and readd them here:
-#   605 and 607
-def add_missing_bins(L):
-    tmp1 = np.concatenate([L[:, :605], np.nan*np.ones((L.shape[0],1)), L[:, 605:]], axis=1)
-    tmp2 = np.concatenate([tmp1[:, :607], np.nan*np.ones((tmp1.shape[0],1)), tmp1[:, 607:]], axis=1)
-    tmp3 = np.concatenate([tmp2[:605, :], np.nan*np.ones((1,tmp2.shape[1])), tmp2[605:,:]], axis=0)
-    tmp4 = np.concatenate([tmp3[:607, :], np.nan*np.ones((1,tmp3.shape[1])), tmp2[607:,:]], axis=0)
-    return tmp4.copy()
-
 
 def main(hicfile, ldaggfile, binsize, out):
     BINSIZE = binsize
@@ -111,7 +102,6 @@ def main(hicfile, ldaggfile, binsize, out):
     # Get LD data
     L = np.loadtxt(ldaggfile)
     if BINSIZE == 5000:
-        L = add_missing_bins(L)
         L = np.log10(L)
 
     # 1 main axis + 2 colorbar axes
@@ -186,33 +176,14 @@ def main(hicfile, ldaggfile, binsize, out):
     if binsize != 5000:
         unit = 10
     
-    p = name_point['CHD9'][0]-START; d = 2*unit
-    ax.plot([p, p], [p, p+d], 'k--', linewidth=1)
-    ax.text(p, p+d+2, 'CHD9')
-
-    p = name_point['RBL2'][0]-START; d = 2*unit
-    ax.plot([p, p], [p, p+d], 'k--', linewidth=1)
-    ax.text(p, p+d+2, 'RBL2')
-
-    p = name_point['FTO'][0]-START; d = 4*unit
-    ax.plot([p, p], [p, p+d], 'k--', linewidth=1)
-    ax.text(p, p+d+4, 'FTO\nRFGRIP1L')
-
-    p = name_point['rs1421085'][0]-START; d = 2*unit
-    ax.plot([p, p], [p, p+d], 'k--', linewidth=1)
-    ax.text(p, p+d+2, 'rs1421085')
-
-    p = name_point['IRX3'][0]-START; d = 2*unit
-    ax.plot([p, p], [p, p+d], 'k--', linewidth=1)
-    ax.text(p, p+d+2, 'IRX3')
-
-    p = name_point['IRX5'][0]-START; d = 2*unit
-    ax.plot([p, p], [p, p+d], 'k--', linewidth=1)
-    ax.text(p, p+d+4, 'IRX5\nCRNDE')
-
-    p = name_point['IRX6'][0]-START; d = unit
-    ax.plot([p, p], [p, p+d], 'k--', linewidth=1)
-    ax.text(p, p+d+2, 'IRX6');
+    names_ = ['CHD9', 'RBL2', 'FTO', 'rs1421085', 'IRX3', 'IRX5', 'IRX6']
+    texts = ['CHD9', 'RBL2', 'FTO\nRFGRIP1L', 'rs1421085', 'IRX3', 'IRX5\nCRNDE', 'IRX6']
+    mults = [2,2,4,2,2,2,1] 
+    for name, text, mult in zip(names_, texts, mults):
+        p = name_point[name][0]-START
+        d = mult*unit
+        ax.plot([p, p], [p, p+d], 'k--', linewidth=1)
+        ax.text(p, p+d+mult, text)
 
     plt.savefig(
         out+'.{}.pdf'.format(datetime.date.today()),
