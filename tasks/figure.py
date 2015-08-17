@@ -45,6 +45,9 @@ locations = [ #bp coordinate
 
 
 # some utils...
+
+blues = sns.cubehelix_palette(0.4, gamma=0.5, rot=-0.3, dark=0.1, light=0.9, as_cmap=True)
+
 def reveal_triu(A):
     B = np.array(A)
     B[np.tril_indices_from(B)] = np.nan
@@ -107,6 +110,7 @@ def main(hicfile, ldaggfile, binsize, out):
     L = np.loadtxt(ldaggfile)
     if BINSIZE == 5000:
         L = add_missing_bins(L)
+        L = np.log10(L)
 
     # 1 main axis + 2 colorbar axes
     f, (ax, cax1, cax2) = plt.subplots(3,1, figsize=(20,50))
@@ -114,12 +118,11 @@ def main(hicfile, ldaggfile, binsize, out):
     # plot HiC/LD
     imA = ax.matshow(
         reveal_triu(np.log(A)), 
-        cmap=chx(0.6), 
+        cmap=blues, 
         interpolation='none'
     )
-    imL = ax.matshow(
-        reveal_tril(np.log10(L)), 
-        cmap=plt.cm.Blues, 
+    imL = ax.matshow(L), 
+        cmap=plt.cm.Reds, 
         interpolation='none'
     )
     ax.set_xlim([0, N])
