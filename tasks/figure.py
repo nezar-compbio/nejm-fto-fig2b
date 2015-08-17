@@ -101,9 +101,11 @@ def main(hicfile, ldaggfile, binsize, out):
     }
 
     # Get Hi-C data
-    chr16 = np.load(hicfile)
-    colsum = chr16.sum(axis=0).max()
-    A = chr16[START:STOP, START:STOP]
+    #chr16 = np.load(hicfile)
+    #colsum = chr16.sum(axis=0).max()
+    #A = chr16[START:STOP, START:STOP]
+    A = np.load(hicfile)
+    colsum = 1  #2387.157
     N = len(A)
 
     # Get LD data
@@ -113,7 +115,7 @@ def main(hicfile, ldaggfile, binsize, out):
         L = np.log10(L)
 
     # 1 main axis + 2 colorbar axes
-    f, (ax, cax1, cax2) = plt.subplots(3,1, figsize=(20,50))
+    f, (ax, cax1, cax2) = plt.subplots(3,1, figsize=(20, 50))
 
     # plot HiC/LD
     imA = ax.matshow(
@@ -121,7 +123,8 @@ def main(hicfile, ldaggfile, binsize, out):
         cmap=blues, 
         interpolation='none'
     )
-    imL = ax.matshow(L), 
+    imL = ax.matshow(
+        reveal_tril(L), 
         cmap=plt.cm.Reds, 
         interpolation='none'
     )
@@ -131,15 +134,15 @@ def main(hicfile, ldaggfile, binsize, out):
 
     # genomic coordinate ticks
     tick_locator = MaxNLocator(4)
-    tick_formatter = FuncFormatter( lambda x, pos: '{:7.0f}'.format(START*BINSIZE + x*BINSIZE) )
+    tick_formatter = FuncFormatter( lambda x, pos: '{:,}'.format(int(START*BINSIZE + x*BINSIZE)))
     ax.xaxis.set_major_locator(tick_locator)
     ax.xaxis.set_major_formatter(tick_formatter)
     ax.yaxis.set_major_locator(tick_locator)
     ax.yaxis.set_major_formatter(tick_formatter)
 
-    #Hi-C colorbar (units = contact probability)
+    #Hi-C colorbar (units = intrachromosomal contact probability)
     cax1.set_position([
-        bbox.x0+bbox.width-0.07, 
+        bbox.x0+bbox.width-0.05, 
         bbox.y0, 
         0.015, 
         bbox.height,
@@ -148,9 +151,9 @@ def main(hicfile, ldaggfile, binsize, out):
     cmin, cmax = cbar.get_clim()
     cticks = np.linspace(cmin, cmax, 5)
     cbar.set_ticks(cticks)
-    cbar.set_ticklabels(['{:0.2f}'.format(np.exp(t)/colsum * 100) for t in cticks])
+    cbar.set_ticklabels(['{:0.1e}'.format(np.exp(t)/colsum) for t in cticks])
 
-    # LD colorbar (units = log10 r^2-value)
+    # LD colorbar (units = (log10?) r^2-value)
     cax2.set_position([
         bbox.x0+bbox.width,
         bbox.y0,
@@ -161,7 +164,7 @@ def main(hicfile, ldaggfile, binsize, out):
     cmin, cmax = cbar.get_clim()
     cticks = np.linspace(cmin, cmax, 5)
     cbar.set_ticks(cticks)
-    cbar.set_ticklabels(['{:0.1f}'.format(t) for t in cticks])
+    cbar.set_ticklabels(['{:.1e}'.format(t) for t in cticks])
 
     # identify loci
     for name, point in name_point.items():
@@ -169,49 +172,52 @@ def main(hicfile, ldaggfile, binsize, out):
         kw = {}
         if name == 'rs1421085':
             kw['marker'] = 'o'
-            kw['markerfacecolor'] = 'r'
-            kw['markeredgecolor'] = 'r'
+            kw['markerfacecolor'] = 'k'
+            kw['markeredgecolor'] = 'k'
             kw['markeredgewidth'] = 1
         else:
             kw['marker'] = 'o'
             kw['markerfacecolor'] = 'none'
-            kw['markeredgecolor'] = 'r'
+            kw['markeredgecolor'] = 'k'
             kw['markeredgewidth'] = 1
         ax.plot(a-START, b-START, **kw)
 
+    unit = 80
+    if binsize != 5000:
+        unit = 10
     
-    p = name_point['CHD9'][0]-START; d = 160
+    p = name_point['CHD9'][0]-START; d = 2*unit
     ax.plot([p, p], [p, p+d], 'k--', linewidth=1)
     ax.text(p, p+d+2, 'CHD9')
 
-    p = name_point['RBL2'][0]-START; d = 160
+    p = name_point['RBL2'][0]-START; d = 2*unit
     ax.plot([p, p], [p, p+d], 'k--', linewidth=1)
     ax.text(p, p+d+2, 'RBL2')
 
-    p = name_point['FTO'][0]-START; d = 320
+    p = name_point['FTO'][0]-START; d = 4*unit
     ax.plot([p, p], [p, p+d], 'k--', linewidth=1)
     ax.text(p, p+d+4, 'FTO\nRFGRIP1L')
 
-    p = name_point['rs1421085'][0]-START; d = 160
+    p = name_point['rs1421085'][0]-START; d = 2*unit
     ax.plot([p, p], [p, p+d], 'k--', linewidth=1)
     ax.text(p, p+d+2, 'rs1421085')
 
-    p = name_point['IRX3'][0]-START; d = 160
+    p = name_point['IRX3'][0]-START; d = 2*unit
     ax.plot([p, p], [p, p+d], 'k--', linewidth=1)
     ax.text(p, p+d+2, 'IRX3')
 
-    p = name_point['IRX5'][0]-START; d = 160
+    p = name_point['IRX5'][0]-START; d = 2*unit
     ax.plot([p, p], [p, p+d], 'k--', linewidth=1)
     ax.text(p, p+d+4, 'IRX5\nCRNDE')
 
-    p = name_point['IRX6'][0]-START; d = 80
+    p = name_point['IRX6'][0]-START; d = unit
     ax.plot([p, p], [p, p+d], 'k--', linewidth=1)
     ax.text(p, p+d+2, 'IRX6');
 
     plt.savefig(
         out+'.{}.pdf'.format(datetime.date.today()),
         bbox_inches='tight', 
-        pad_inches=0
+        pad_inches=0.5
     )
 
 

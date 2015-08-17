@@ -17,6 +17,10 @@ Analysis pipeline
 -----------------
 
 ```bash
+$ make install-tools
+```
+
+```bash
 $ make init fetch-vcf
 ```
 

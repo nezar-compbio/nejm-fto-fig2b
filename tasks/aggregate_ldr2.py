@@ -14,6 +14,7 @@ def aggregate(n_bins, iterator, counts, binsize, dtype, out, thresh, percentile)
     R2perc = np.zeros((n_bins, n_bins), dtype=dtype)
     for (i, j), x in iterator:
         y = x[-np.isnan(x)]
+        if not len(y): continue
         R2mean[i, j] = np.mean(y)
         R2medi[i, j] = np.median(y)
         R2freq[i, j] = np.sum(y >= thresh)/counts[i]/counts[j]
