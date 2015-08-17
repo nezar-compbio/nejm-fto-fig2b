@@ -12,7 +12,7 @@ plink-1.07:
 	mv $(BINDIR)plink-1.07-x86_64/plink $(BINDIR)plink && rmdir $(BINDIR)plink-1.07-x86_64
 
 plink-1.9:
-	wget -O $(BINDIR)plink.zip "https://www.cog-genomics.org/static/bin/plink150206/plink_linux_x86_64.zip"; \
+	wget -O $(BINDIR)plink.zip "https://www.cog-genomics.org/static/bin/plink150805/plink_linux_x86_64.zip"; \
 	unzip $(BINDIR)plink.zip plink prettify -d $(BINDIR) && rm $(BINDIR)plink.zip; \
 	mv $(BINDIR)plink $(BINDIR)plink2
 
