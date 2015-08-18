@@ -101,8 +101,7 @@ def main(hicfile, ldaggfile, binsize, out):
 
     # Get LD data
     L = np.loadtxt(ldaggfile)
-    if BINSIZE == 5000:
-        L = np.log10(L)
+    # L = np.log10(L)
 
     # 1 main axis + 2 colorbar axes
     f, (ax, cax1, cax2) = plt.subplots(3,1, figsize=(20, 50))

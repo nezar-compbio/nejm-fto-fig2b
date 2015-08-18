@@ -1,7 +1,8 @@
 .DS_Store
 .ipynb_checkpoints/
+tmp
 bin/*
 !bin/Makefile
 data/*
 !data/04-hic
-tmp/
+

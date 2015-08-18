@@ -16,9 +16,9 @@ INPUTNAME = chr16.$(START)-$(STOP)
 
 # Size of bins to aggregate (bp)
 #BINSIZE = 40000
-#HICFILE = "Jin2013-IMR90.chr16_40kb_FTO.ICEobserved.npy"
+#HICFILE = "Jin2013-IMR90.40kb.FTO.ICnormalized.npy"
 BINSIZE = 5000
-HICFILE = "Rao2014-IMR90.MAPQG0.chr16_5kb_FTO.ICEobserved.npy"
+HICFILE = "Rao2014-IMR90.5kb_MAPQG0.FTO.KRnormalized.npy"
 
 
 # Floating point format or gz: bin, bin4, gz
